@@ -1,19 +1,34 @@
 # mfe-reportes
 
-Micro-frontend remote (Webpack 5 Module Federation) que expone el componente `TablaTransacciones`, consumido por `shell-app`.
+<p>
+  <img src="https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React"/>
+  <img src="https://img.shields.io/badge/Webpack_5-8DD6F9?style=flat-square&logo=webpack&logoColor=black" alt="Webpack 5"/>
+  <img src="https://img.shields.io/badge/Module_Federation-C7003F?style=flat-square" alt="Module Federation"/>
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
+</p>
 
-- Nombre del remote: `reportes`
-- Módulo expuesto: `./TablaTransacciones` (`remoteEntry.js`)
-- Consume `GET /api/transacciones/:cuentaId` de `api-node`, vía la variable de entorno `API_URL`.
+Module Federation remote exposing the `TablaTransacciones` component, consumed at
+runtime by [`shell-app`](https://github.com/Rxcxrdx/shell-app).
 
-## Correr standalone (desarrollo)
+> Part of the [**Micro-Frontends on Azure AKS**](https://github.com/Rxcxrdx/microfrontends-aks-jenkins)
+> project — see that repository for the full architecture and deployment guide.
+
+| | |
+|:--|:--|
+| **Remote name** | `reportes` |
+| **Exposed module** | `./TablaTransacciones` |
+| **Entry point** | `remoteEntry.js` |
+| **API consumed** | `GET /api/transacciones/:cuentaId` from [`api-node`](https://github.com/Rxcxrdx/api-node) |
+
+## Running standalone
 
 ```bash
 npm install
 API_URL=http://localhost:3001 npm start
 ```
 
-Abre `http://localhost:3003` — el componente `TablaTransacciones` se renderiza standalone dentro de un wrapper simple, consumiendo la API local.
+Open http://localhost:3003 — `TablaTransacciones` renders inside a minimal wrapper
+against the local API, so the component can be developed without the host.
 
 ## Tests
 
@@ -21,13 +36,14 @@ Abre `http://localhost:3003` — el componente `TablaTransacciones` se renderiza
 npm test
 ```
 
-## Build de producción
+## Production build
 
 ```bash
 API_URL=http://api-node:3001 npm run build
 ```
 
-Genera `dist/remoteEntry.js` y los estáticos que consumirá el shell vía Module Federation.
+Emits `dist/remoteEntry.js` plus the static assets the host loads through
+Module Federation.
 
 ## Docker
 
@@ -36,4 +52,10 @@ docker build --build-arg API_URL=http://localhost:3001 -t mfe-reportes .
 docker run -p 3003:80 mfe-reportes
 ```
 
-El contenedor sirve `remoteEntry.js` y los estáticos con nginx en el puerto `80`, con CORS habilitado para que el shell pueda cargarlo desde otro origen.
+nginx serves `remoteEntry.js` and the static assets on port `80`, with CORS
+enabled so the host can load them from a different origin.
+
+> **`API_URL` is resolved at build time**, not at runtime — it is inlined into
+> the bundle by `webpack.DefinePlugin`. It must therefore be a URL the
+> **browser** can reach, and it has to be passed as a `--build-arg`. Setting it
+> as an environment variable on a Kubernetes deployment has no effect.
